@@ -9,8 +9,17 @@ const DAY: &str = "01"; // TODO: Fill the day
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
 const TEST: &str = "\
-<TEST-INPUT>
-"; // TODO: Add the test input
+L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82
+";
 
 fn main() -> Result<()> {
     start_day(DAY);
@@ -33,8 +42,7 @@ fn main() -> Result<()> {
         Ok(answer)
     }
 
-    // TODO: Set the expected answer for the test input
-    //assert_eq!(0, part1(BufReader::new(TEST.as_bytes()))?);
+    assert_eq!(3, part1(BufReader::new(TEST.as_bytes()))?);
 
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
     let result = time_snippet!(part1(input_file)?);
@@ -56,7 +64,7 @@ fn main() -> Result<()> {
         Ok(answer)
     }
 
-    //assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
+    assert_eq!(6, part2(BufReader::new(TEST.as_bytes()))?);
 
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
     let result = time_snippet!(part2(input_file)?);
@@ -65,8 +73,6 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-
-
 
 struct Dial<const MIN: i16, const MAX: i16> {
     position: u8,
