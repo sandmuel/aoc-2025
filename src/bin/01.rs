@@ -20,11 +20,12 @@ fn main() -> Result<()> {
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
         // TODO: Solve Part 1 of the puzzle
-        let mut dial = Dial::default();
+        let mut dial: Dial<0, 99> = Dial::default();
         let sequence = Sequence::parse(reader);
         let mut answer = 0;
         for rotation in sequence {
-            if dial.rotate(rotation) == 0 {
+            dial.rotate(rotation);
+            if dial.position == 0 {
                 answer += 1;
             }
         }
@@ -44,10 +45,18 @@ fn main() -> Result<()> {
     println!("\n=== Part 2 ===");
 
     fn part2<R: BufRead>(reader: R) -> Result<usize> {
-        Ok(0)
+        let mut dial: Dial<0, 99> = Dial::default();
+        let sequence = Sequence::parse(reader);
+        let mut answer = 0;
+        for rotation in sequence {
+            let cycles = dial.rotate(rotation) as usize;
+            answer += cycles;
+        }
+
+        Ok(answer)
     }
 
-    assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
+    //assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
 
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
     let result = time_snippet!(part2(input_file)?);
@@ -59,29 +68,34 @@ fn main() -> Result<()> {
 
 
 
-struct Dial {
+struct Dial<const MIN: i16, const MAX: i16> {
     position: u8,
 }
 
-impl Dial {
-    fn rotate(&mut self, rotation: Rotation) -> u8 {
+impl<const MIN: i16, const MAX: i16> Dial<MIN, MAX> {
+    fn rotate(&mut self, rotation: Rotation) -> i16 {
         let new_pos_unwrapped = self.position as i16 + rotation.value();
-        // Loop around the 0-99 range.
-        self.position = self.wrap_position::<0, 99>(new_pos_unwrapped) as u8;
-        self.position
+        let cycles = self.cycles_in(&rotation);
+        self.position = self.wrap_position(new_pos_unwrapped) as u8;
+        cycles
     }
 
     /// Returns the nummber of cycles the dial position goes through.
-    fn cycles_in<const MIN: i16, const MAX: i16>(&self, position: i16) -> i16 {
+    fn cycles_in(&self, rotation: &Rotation) -> i16 {
         let cycle = MAX - MIN + 1;
-        position / cycle
+        let position = self.position as i16;
+        let new_pos_unwrapped = self.position as i16 + rotation.value();
+        let mut cycles = (new_pos_unwrapped / cycle).unsigned_abs();
+        if new_pos_unwrapped <= MIN && position > 0 {
+            cycles += 1;
+        }
+        cycles as i16
     }
 
     /// Wraps the given value between the first and second const generic.
-    fn wrap_position<const MIN: i16, const MAX: i16>(&self, position: i16) -> i16 {
+    fn wrap_position(&self, position: i16) -> i16 {
         let cycle = MAX - MIN + 1;
-        let complete_turns = self.cycles_in::<MIN, MAX>(position);
-        let partial_cycle = position - complete_turns * cycle;
+        let partial_cycle = position % cycle;
         if partial_cycle < MIN {
             return cycle + partial_cycle;
         }
@@ -89,7 +103,7 @@ impl Dial {
     }
 }
 
-impl Default for Dial {
+impl<const MIN: i16, const MAX: i16> Default for Dial<MIN, MAX> {
     fn default() -> Self {
         Self { position: 50 }
     }
