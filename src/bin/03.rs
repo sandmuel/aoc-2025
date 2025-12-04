@@ -26,12 +26,58 @@ fn main() -> Result<()> {
             banks: Vec<Bank>,
         }
 
+        impl Banks {
+            fn parse<R: BufRead>(reader: R) -> Self {
+                let mut banks = Vec::new();
+                for line in reader.lines() {
+                    let line = line.unwrap();
+                    let line = line.trim();
+                    let batteries = line
+                        .chars()
+                        .map(|c| c.to_string().parse::<u8>().unwrap())
+                        .collect();
+                    banks.push(Bank { batteries });
+                }
+                Self { banks }
+            }
+        }
+
         struct Bank {
             batteries: Vec<u8>,
         }
 
-        let answer = reader.lines().flatten().count();
-        Ok(answer)
+        impl Bank {
+            fn max_joltage<const USED_BATTERIES: usize>(&self) -> u8 {
+                let battery_count = self.batteries.len();
+                let mut first_digit = 0;
+                let mut first_digit_idx = 0;
+                // We need at least one battery after this since we can't reorder.
+                for i in 0..(battery_count - 1) {
+                    if self.batteries[i] > first_digit {
+                        first_digit = self.batteries[i];
+                        first_digit_idx = i;
+                    }
+                }
+
+                let mut second_digit = 0;
+                for i in (first_digit_idx + 1)..battery_count {
+                    if self.batteries[i] > second_digit {
+                        second_digit = self.batteries[i];
+                    }
+                }
+
+                let joltage = (first_digit.to_string() + &second_digit.to_string());
+                joltage.parse::<u8>().unwrap()
+            }
+        }
+
+        let mut total_power = 0;
+        let banks = Banks::parse(reader);
+        for bank in banks.banks {
+            total_power += bank.max_joltage::<2>() as usize;
+        }
+
+        Ok(total_power)
     }
 
     assert_eq!(357, part1(BufReader::new(TEST.as_bytes()))?);

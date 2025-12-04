@@ -92,7 +92,9 @@ fn main() -> Result<()> {
                     }
 
                     // If any of the patterns is uniform this is considered repeating.
-                    if uniform { repeats = true; }
+                    if uniform {
+                        repeats = true;
+                    }
                 }
                 if repeats {
                     invalid_ids.push(id_num);
