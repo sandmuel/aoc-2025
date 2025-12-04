@@ -5,7 +5,7 @@ use const_format::concatcp;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-const DAY: &str = "01"; // TODO: Fill the day
+const DAY: &str = "01";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
 const TEST: &str = "\
@@ -28,7 +28,6 @@ fn main() -> Result<()> {
     println!("=== Part 1 ===");
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
-        // TODO: Solve Part 1 of the puzzle
         let mut dial: Dial<0, 99> = Dial::default();
         let sequence = Sequence::parse(reader);
         let mut answer = 0;
@@ -154,7 +153,10 @@ impl Sequence {
 
             let distance = dist.parse::<i16>().unwrap();
 
-            Rotation { direction, distance }
+            Rotation {
+                direction,
+                distance,
+            }
         })
     }
 }
