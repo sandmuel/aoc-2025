@@ -22,59 +22,10 @@ fn main() -> Result<()> {
     println!("=== Part 1 ===");
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
-        struct Banks {
-            banks: Vec<Bank>,
-        }
-
-        impl Banks {
-            fn parse<R: BufRead>(reader: R) -> Self {
-                let mut banks = Vec::new();
-                for line in reader.lines() {
-                    let line = line.unwrap();
-                    let line = line.trim();
-                    let batteries = line
-                        .chars()
-                        .map(|c| c.to_string().parse::<u8>().unwrap())
-                        .collect();
-                    banks.push(Bank { batteries });
-                }
-                Self { banks }
-            }
-        }
-
-        struct Bank {
-            batteries: Vec<u8>,
-        }
-
-        impl Bank {
-            fn max_joltage<const USED_BATTERIES: usize>(&self) -> u8 {
-                let battery_count = self.batteries.len();
-                let mut first_digit = 0;
-                let mut first_digit_idx = 0;
-                // We need at least one battery after this since we can't reorder.
-                for i in 0..(battery_count - 1) {
-                    if self.batteries[i] > first_digit {
-                        first_digit = self.batteries[i];
-                        first_digit_idx = i;
-                    }
-                }
-
-                let mut second_digit = 0;
-                for i in (first_digit_idx + 1)..battery_count {
-                    if self.batteries[i] > second_digit {
-                        second_digit = self.batteries[i];
-                    }
-                }
-
-                let joltage = (first_digit.to_string() + &second_digit.to_string());
-                joltage.parse::<u8>().unwrap()
-            }
-        }
-
         let mut total_power = 0;
         let banks = Banks::parse(reader);
         for bank in banks.banks {
-            total_power += bank.max_joltage::<2>() as usize;
+            total_power += bank.max_joltage::<2>();
         }
 
         Ok(total_power)
@@ -88,18 +39,80 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //     Ok(0)
-    // }
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    fn part2<R: BufRead>(reader: R) -> Result<usize> {
+        let mut total_power = 0;
+        let banks = Banks::parse(reader);
+        for bank in banks.banks {
+            total_power += bank.max_joltage::<12>();
+        }
+
+        Ok(total_power)
+    }
+
+    assert_eq!(3121910778619, part2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())
+}
+
+struct Banks {
+    banks: Vec<Bank>,
+}
+
+impl Banks {
+    fn parse<R: BufRead>(reader: R) -> Self {
+        let mut banks = Vec::new();
+        for line in reader.lines() {
+            let line = line.unwrap();
+            let line = line.trim();
+            let batteries = line
+                .chars()
+                .map(|c| c.to_string().parse::<u8>().unwrap())
+                .collect();
+            banks.push(Bank { batteries });
+        }
+        Self { banks }
+    }
+}
+
+struct Bank {
+    batteries: Vec<u8>,
+}
+
+impl Bank {
+    fn max_joltage<const USED_BATTERIES: usize>(&self) -> usize {
+        let battery_count = self.batteries.len();
+        let mut digits = Vec::new();
+        let mut start_idx = 0;
+
+        for digit_idx in 0..USED_BATTERIES {
+            // We need to leave enough batteries for the remaining digits.
+            let max_search = (battery_count - (USED_BATTERIES - digit_idx - 1));
+
+            // Start at the leftmost available battery.
+            let mut selection_idx = start_idx;
+
+            for i in selection_idx..max_search {
+                // Pick the best battery in our selection.
+                if self.batteries[i] > self.batteries[selection_idx] {
+                    selection_idx = i;
+                }
+            }
+
+            digits.push(self.batteries[selection_idx]);
+            start_idx = selection_idx + 1;
+        }
+
+        let mut combined_batteries = String::new();
+        for digit in digits {
+            combined_batteries += &digit.to_string()
+        }
+        combined_batteries.parse::<usize>().unwrap()
+    }
 }
