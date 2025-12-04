@@ -52,62 +52,31 @@ fn main() -> Result<()> {
             }
         }
 
-        fn valid_id(product_id: &ProductId) -> usize {
-            let first = product_id.first.value.to_string();
-            let last = product_id.last.value.to_string();
-
-            let invalidness = 0;
-            if product.first.zero_prefix || repeating_segments(&first) {
-
-            }
-            if product.last.zero_prefix || repeating_segments(&last) {
-
-            }
-        }
-
-        fn repeating_segments(string: &String) -> bool {
-            const SEGMENT_LEN: usize = 2;
-            // Go through it like so:
-            // [1__2][3__4][5__6]
-            let mut quantity = string.len() / SEGMENT_LEN; // Any odd number is ignored in int division.
-            let mut segments = Vec::new();
-            for i in 0..quantity {
-                let seg_start = i * 2;
-                let seg_end = seg_start + 1;
-                segments.push(&string[seg_start..seg_end]);
-            }
-            let mut first_overlaps = false;
-            for segment in segments {
-                if string.find(segment).unwrap() > 1 {
-                    first_overlaps = true;
+        fn invalid_ids(product_id: &ProductId) -> Vec<u64> {
+            let mut invalid_ids = Vec::new();
+            let (first, last) = (product_id.first.value, product_id.last.value);
+            for id_num in first..last {
+                let id = id_num.to_string();
+                if id.len() % 2 != 0 {
+                    continue;
+                }
+                let pattern_length = id.len() / 2;
+                let (first_half, second_half) = id.split_at(pattern_length);
+                if first_half == second_half {
+                    invalid_ids.push(id_num);
                 }
             }
-
-            // And now like so:
-            // _1_[2__3][4__5]_6_
-            if string.len() % SEGMENT_LEN == 0 {
-                quantity -= 1; // Any even number can fit one fewer segment from orginal alignment.
-            }
-            let mut segments = Vec::new();
-            for i in 0..quantity {
-                let seg_start = 1 + i * 2;
-                let seg_end = seg_start + 1;
-                segments.push(&string[seg_start..seg_end]);
-            }
-            let mut last_overlaps = false;
-            for segment in segments {
-                if string.find(segment).unwrap() > 1 {
-                    last_overlaps = true;
-                }
-            }
-
-            first_overlaps || last_overlaps
+            invalid_ids
         }
 
         let sequence = Sequence::parse(reader);
         let mut answer = 0;
         for product_id in sequence {
-            answer += !valid_id(&product_id) as usize;
+            let mut invalid_id_sum = 0;
+            for invalid_id in invalid_ids(&product_id) {
+                invalid_id_sum += invalid_id;
+            }
+            answer += invalid_id_sum as usize;
         }
 
         Ok(answer)
