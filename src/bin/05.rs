@@ -33,14 +33,10 @@ fn main() -> Result<()> {
         let mut fresh_ingredients = 0;
         let ingredient_db = IngredientDb::parse(reader);
         for ingredient in ingredient_db.available {
-            let mut is_fresh = false;
             for range in &ingredient_db.fresh {
                 if ingredient >= range.0 && ingredient <= range.1 {
-                    is_fresh = true;
+                    fresh_ingredients += 1;
                 }
-            }
-            if is_fresh {
-                fresh_ingredients += 1;
             }
         }
         Ok(fresh_ingredients)
@@ -59,7 +55,9 @@ fn main() -> Result<()> {
     fn part2<R: BufRead>(reader: R) -> Result<usize> {
         let mut fresh_ingredient_ids = 0;
         let ingredient_db = IngredientDb::parse(reader);
-
+        for range in ingredient_db.fresh {
+            fresh_ingredient_ids += 1 + (range.1-range.0) as usize;
+        }
         Ok(fresh_ingredient_ids)
     }
 
@@ -80,7 +78,7 @@ struct IngredientDb {
 
 impl IngredientDb {
     fn parse<R: BufRead>(reader: R) -> Self {
-        let mut fresh = Vec::new();
+        let mut fresh: Vec<(u64, u64)> = Vec::new();
         let mut available = Vec::new();
 
         enum Section {
@@ -98,11 +96,47 @@ impl IngredientDb {
             match section {
                 Section::Fresh => {
                     let (first, last) = line.split_once('-').unwrap();
-                    let (first, last) = (first.parse::<u64>().unwrap(), last.parse::<u64>().unwrap());
+                    let (mut first, mut last) = (first.parse::<u64>().unwrap(), last.parse::<u64>().unwrap());
+                    println!("trying to add: {:?}", (first, last));
 
-                    // Fancy check for overlap.
+                    let mut remove_queue: Vec<(u64, u64)> = Vec::new();
+                    let mut useless = false;
+                    // Fancy check for overlap with previous ranges.
+                    for range in &fresh {
+                        // Check if this range is swallowed.
+                        if range.0 < first && range.1 > last {
+                            useless = true;
+                            break;
+                        }
+                        // Check if this range swallows another.
+                        if range.0 >= first && range.1 <= last {
+                            remove_queue.push(*range);
+                            continue;
+                        }
+                        // If another range overlaps with the left of our range, move first to the right of it.
+                        if range.1 >= first && range.1 <= last {
+                            first = range.1 + 1;
+                            println!("moved first to: {}", first);
+                        }
+                        // Do the same check on the other side.
+                        if range.0 <= last && range.0 >= first {
+                            last = range.0 - 1;
+                            println!("moved last to: {}", last)
+                        }
+                        if first > last {
+                            useless = true;
+                            break;
+                        }
+                    }
 
-                    fresh.push((first, last));
+                    if !useless {
+                        for range in remove_queue {
+                            let idx = fresh.iter().position(|x| *x == range).unwrap();
+                            fresh.remove(idx);
+                        }
+                        fresh.push((first, last));
+                        println!("added: {:?}", (first, last));
+                    }
                 },
                 Section::Available => {
                     available.push(line.parse::<u64>().unwrap());
