@@ -56,7 +56,7 @@ fn main() -> Result<()> {
         let mut fresh_ingredient_ids = 0;
         let ingredient_db = IngredientDb::parse(reader);
         for range in ingredient_db.fresh {
-            fresh_ingredient_ids += 1 + (range.1-range.0) as usize;
+            fresh_ingredient_ids += 1 + (range.1 - range.0) as usize;
         }
         Ok(fresh_ingredient_ids)
     }
@@ -96,7 +96,8 @@ impl IngredientDb {
             match section {
                 Section::Fresh => {
                     let (first, last) = line.split_once('-').unwrap();
-                    let (mut first, mut last) = (first.parse::<u64>().unwrap(), last.parse::<u64>().unwrap());
+                    let (mut first, mut last) =
+                        (first.parse::<u64>().unwrap(), last.parse::<u64>().unwrap());
                     println!("trying to add: {:?}", (first, last));
 
                     let mut remove_queue: Vec<(u64, u64)> = Vec::new();
@@ -137,7 +138,7 @@ impl IngredientDb {
                         fresh.push((first, last));
                         println!("added: {:?}", (first, last));
                     }
-                },
+                }
                 Section::Available => {
                     available.push(line.parse::<u64>().unwrap());
                 }
