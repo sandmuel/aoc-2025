@@ -99,7 +99,10 @@ fn main() -> Result<()> {
                             }
                             if char == '+' || char == '*' {
                                 equation_starts.push(i);
-                                homework.problems.push(Problem { numbers: Vec::new(), op: char });
+                                homework.problems.push(Problem {
+                                    numbers: Vec::new(),
+                                    op: char,
+                                });
                             }
                         }
                     } else {
@@ -136,7 +139,9 @@ fn main() -> Result<()> {
 
                 for (i, column) in char_columns.iter().enumerate() {
                     for num in column {
-                        homework.problems[i].numbers.push(num.trim().parse::<u32>().unwrap());
+                        homework.problems[i]
+                            .numbers
+                            .push(num.trim().parse::<u32>().unwrap());
                     }
                 }
 
