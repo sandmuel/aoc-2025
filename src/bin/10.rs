@@ -109,22 +109,36 @@ fn main() -> Result<()> {
         let mut total_presses = 0;
         for mut machine in machines {
             println!("{:?}", machine);
-            let mut lights_to_change: Vec<usize> = Vec::new();
-            for (i, light) in machine.target_lights.iter().enumerate() {
-                if *light == true {
-                    lights_to_change.push(i)
-                }
-            }
             while machine.lights != machine.target_lights {
-                for button in &machine.buttons {
-                    let mut usefulness = 0;
+                // Calculate which lights need to be toggled.
+                let mut lights_to_change: Vec<usize> = Vec::new();
+                for (i, light) in machine.target_lights.iter().enumerate() {
+                    if *light == true {
+                        lights_to_change.push(i)
+                    }
+                }
+                // Figure out which buttons are most useful for toggling what we need.
+                let mut useful_buttons: Vec<usize> = vec![0; machine.buttons.len()];
+                for (i, button) in machine.buttons.iter().enumerate() {
                     // Check if this button is useful on its own.
                     for connection in button.connections() {
                         if lights_to_change.contains(connection) {
-                            usefulness += 1;
+                            useful_buttons[i] += 1;
                         }
                     }
                 }
+                // Find the most useful button.
+                let mut most_usefulness = 0;
+                let mut most_useful = 0;
+                for (i, usefulness) in useful_buttons.iter().enumerate() {
+                    if usefulness > &most_usefulness {
+                        most_useful = i;
+                        most_usefulness = *usefulness;
+                    }
+                }
+                // Toggle the most useful button.
+                machine.buttons[most_useful].toggle(&mut machine.lights);
+                total_presses += 1;
             }
         }
         Ok(total_presses)

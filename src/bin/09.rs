@@ -42,8 +42,8 @@ fn main() -> Result<()> {
                 let width = (tile.x - other_tile.x + 1).abs() as usize;
                 let height = (tile.y - other_tile.y + 1).abs() as usize;
                 let area = width * height;
-                if area as usize > largest_area {
-                    largest_area = area as usize;
+                if area > largest_area {
+                    largest_area = area;
                 }
             }
         }
