@@ -1,3 +1,4 @@
+use super::vec2::Vec2;
 use adv_code_2025::*;
 use anyhow::*;
 use code_timing_macros::time_snippet;
@@ -123,41 +124,6 @@ enum Tile {
     Splitter,
     Beam,
 }
-
-#[derive(Eq, Hash, PartialEq, Copy, Clone)]
-struct Vec2 {
-    x: i32,
-    y: i32,
-}
-
-impl Vec2 {
-    fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
-}
-
-impl Add for Vec2 {
-    type Output = Self;
-
-    fn add(self, b: Vec2) -> <Self as Add<Vec2>>::Output {
-        Self::Output {
-            x: self.x + b.x,
-            y: self.y + b.y,
-        }
-    }
-}
-
-impl Sub for Vec2 {
-    type Output = Self;
-
-    fn sub(self, b: Vec2) -> <Self as Add<Vec2>>::Output {
-        Self::Output {
-            x: self.x - b.x,
-            y: self.y - b.y,
-        }
-    }
-}
-
 struct Manifold {
     height: usize,
     tiles: HashMap<Vec2, Tile>,
