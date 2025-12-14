@@ -1,9 +1,9 @@
-use std::fmt::Formatter;
 use adv_code_2025::*;
 use anyhow::*;
 use code_timing_macros::time_snippet;
 use const_format::concatcp;
 use std::fmt::Debug;
+use std::fmt::Formatter;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -25,6 +25,7 @@ fn main() -> Result<()> {
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
         type Light = bool;
         type Lights = Vec<Light>;
+        #[derive(Clone)]
         struct Button(Vec<usize>);
 
         impl Debug for Button {
@@ -56,7 +57,7 @@ fn main() -> Result<()> {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         struct Machine {
             lights: Lights,
             target_lights: Lights,
@@ -105,41 +106,37 @@ fn main() -> Result<()> {
             machines
         }
 
+        fn spam_buttons(machine: &mut Machine, mut pressed: Vec<usize>, depth: usize) -> usize {
+            if machine.lights == machine.target_lights {
+                return 0;
+            }
+            if depth == machine.buttons.len() {
+                return 1;
+            }
+
+            let mut min_presses = usize::MAX;
+
+            for (i, button) in machine.buttons.iter().enumerate() {
+                let mut machine = machine.clone();
+                button.toggle(&mut machine.lights);
+                // Only check for this button if it hasn't been pressed before.
+                if !pressed.contains(&i) {
+                    pressed.push(i);
+                    let min_branch_presses = spam_buttons(&mut machine, pressed.clone(), depth + 1);
+                    if min_branch_presses < min_presses {
+                        min_presses = min_branch_presses + 1;
+                    }
+                }
+            }
+
+            min_presses
+        }
+
         let machines = parse_machines(reader);
         let mut total_presses = 0;
         for mut machine in machines {
             println!("{:?}", machine);
-            while machine.lights != machine.target_lights {
-                // Calculate which lights need to be toggled.
-                let mut lights_to_change: Vec<usize> = Vec::new();
-                for (i, light) in machine.target_lights.iter().enumerate() {
-                    if *light == true {
-                        lights_to_change.push(i)
-                    }
-                }
-                // Figure out which buttons are most useful for toggling what we need.
-                let mut useful_buttons: Vec<usize> = vec![0; machine.buttons.len()];
-                for (i, button) in machine.buttons.iter().enumerate() {
-                    // Check if this button is useful on its own.
-                    for connection in button.connections() {
-                        if lights_to_change.contains(connection) {
-                            useful_buttons[i] += 1;
-                        }
-                    }
-                }
-                // Find the most useful button.
-                let mut most_usefulness = 0;
-                let mut most_useful = 0;
-                for (i, usefulness) in useful_buttons.iter().enumerate() {
-                    if usefulness > &most_usefulness {
-                        most_useful = i;
-                        most_usefulness = *usefulness;
-                    }
-                }
-                // Toggle the most useful button.
-                machine.buttons[most_useful].toggle(&mut machine.lights);
-                total_presses += 1;
-            }
+            total_presses += spam_buttons(&mut machine, Vec::new(), 0);
         }
         Ok(total_presses)
     }
